@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تسجيل وتسجيل الدخول</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            transition: background 0.3s ease;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+            width: 300px;
+            text-align: center;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        h2 {
+            margin-bottom: 20px;
+            color: #fff;
+        }
+        input[type="text"],
+        input[type="password"],
+        input[type="email"],
+        input[type="date"] {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+            transition: border-color 0.3s ease;
+        }
+        input[type="text"]:focus,
+        input[type="password"]:focus,
+        input[type="email"]:focus,
+        input[type="date"]:focus {
+            border-color: #007bff;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .switch-form {
+            margin-top: 20px;
+            cursor: pointer;
+            color: #007bff;
+            transition: color 0.3s ease;
+        }
+        .switch-form:hover {
+            color: #0056b3;
+        }
+        .error-message {
+            color: red;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+        .dashboard {
+            background: url('https://cdn.dribbble.com/userupload/16662030/file/original-225f0bc5b4fbcf4870c59217bca53ecd.png?resize=1024x768&vertical=center') no-repeat center center;
+            background-size: cover;
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            color: white;
+            text-align: center;
+            transition: opacity 0.3s ease;
+        }
+        .dashboard h1 {
+            font-size: 36px;
+            margin-bottom: 20px;
+        }
+        .logout-button {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: transparent;
+            border: 2px solid white;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        .logout-button:hover {
+            background-color: white;
+            color: #007bff;
+        }
+        @media (max-width: 400px) {
+            .container {
+                width: 90%;
+            }
+        }
+    </style>
+    <!-- Firebase App (the core Firebase SDK) is always required and must be listed first -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+    <!-- If you are using Firebase Authentication -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js"></script>
+    <!-- If you are using Firebase Analytics -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-analytics.js"></script>
+</head>
+<body>
+    <div class="container" id="loginForm">
+        <h2>تسجيل الدخول</h2>
+        <input type="email" id="loginUsername" placeholder="البريد الإلكتروني">
+        <input type="password" id="loginPassword" placeholder="كلمة المرور">
+        <div id="loginErrorMessage" class="error-message"></div>
+        <button onclick="login()">تسجيل الدخول</button>
+        <div class="switch-form" onclick="showSignupForm()">ليس لديك حساب؟ انشئ واحداً</div>
+    </div>
+
+    <div class="container" id="signupForm" style="display:none;">
+        <h2>إنشاء حساب</h2>
+        <input type="text" id="signupFirstName" placeholder="الاسم الأول">
+        <input type="text" id="signupLastName" placeholder="الاسم الأخير">
+        <input type="email" id="signupEmail" placeholder="البريد الإلكتروني">
+        <input type="text" id="signupUsername" placeholder="اسم المستخدم">
+        <input type="password" id="signupPassword" placeholder="كلمة المرور">
+        <input type="date" id="signupBirthdate" placeholder="تاريخ الميلاد">
+        <div id="signupErrorMessage" class="error-message"></div>
+        <button onclick="signup()">إنشاء حساب</button>
+        <div class="switch-form" onclick="showLoginForm()">لديك حساب بالفعل؟ تسجيل الدخول</div>
+    </div>
+
+    <div class="dashboard" id="dashboard" style="display:none;">
+        <h1>لوحة التحكم</h1>
+        <button class="logout-button" onclick="logout()">تسجيل الخروج</button>
+    </div>
+
+    <script>
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDVGCZ9UXknQrp8Zlw1vR6m1ZhAHcdh2bA",
+            authDomain: "ghxx-d591d.firebaseapp.com",
+            projectId: "ghxx-d591d",
+            storageBucket: "ghxx-d591d.firebasestorage.app",
+            messagingSenderId: "917629037888",
+            appId: "1:917629037888:web:7720fd3230a9fd18a21ea5",
+            measurementId: "G-MQ6D9XVCR3"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        const auth = getAuth(app);
+
+        function login() {
+            const email = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+            const errorMessageElement = document.getElementById('loginErrorMessage');
+            errorMessageElement.textContent = '';
+
+            signInWithEmailAndPassword(auth, email, password)
+                .then((userCredential) => {
+                    // Signed in 
+                    const user = userCredential.user;
+                    showDashboard();
+                })
+                .catch((error) => {
+                    const errorCode = error.code;
+                    const errorMessage = error.message;
+                    errorMessageElement.textContent = errorMessage;
+                });
+        }
+
+        function signup() {
+            const email = document.getElementById('signupEmail').value;
+            const password = document.getElementById('signupPassword').value;
+            const errorMessageElement = document.getElementById('signupErrorMessage');
+            errorMessageElement.textContent = '';
+
+            createUserWithEmailAndPassword(auth, email, password)
+                .then((userCredential) => {
+                    // Signed up 
+                    const user = userCredential.user;
+                    showDashboard();
+                })
+                .catch((error) => {
+                    const errorCode = error.code;
+                    const errorMessage = error.message;
+                    errorMessageElement.textContent = errorMessage;
+                });
+        }
+
+        function logout() {
+            signOut(auth).then(() => {
+                // Sign-out successful.
+                showLoginForm();
+            }).catch((error) => {
+                // An error happened.
+                alert('حدث خطأ أثناء تسجيل الخروج.');
+            });
+        }
+
+        function showSignupForm() {
+            document.getElementById('loginForm').style.transform = 'translateX(-100%)';
+            setTimeout(() => {
+                document.getElementById('loginForm').style.display = 'none';
+                document.getElementById('signupForm').style.display = 'block';
+                document.getElementById('signupForm').style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    document.getElementById('signupForm').style.transform = 'translateX(0)';
+                }, 10);
+            }, 300);
+        }
+
+        function showLoginForm() {
+            document.getElementById('signupForm').style.transform = 'translateX(100%)';
+            setTimeout(() => {
+                document.getElementById('signupForm').style.display = 'none';
+                document.getElementById('loginForm').style.display = 'block';
+                document.getElementById('loginForm').style.transform = 'translateX(-100%)';
+                setTimeout(() => {
+                    document.getElementById('loginForm').style.transform = 'translateX(0)';
+                }, 10);
+            }, 300);
+        }
+
+        function showDashboard() {
+            document.getElementById('loginForm').style.transform = 'translateX(-100%)';
+            document.getElementById('signupForm').style.transform = 'translateX(100%)';
+            setTimeout(() => {
+                document.getElementById('loginForm').style.display = 'none';
+                document.getElementById('signupForm').style.display = 'none';
+                document.getElementById('dashboard').style.display = 'flex';
+                document.getElementById('dashboard').style.opacity = '0';
+                setTimeout(() => {
+                    document.getElementById('dashboard').style.opacity = '1';
+                }, 10);
+            }, 300);
+        }
+    </script>
+</body>
+</html>
